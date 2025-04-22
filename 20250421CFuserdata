@@ -124,7 +124,7 @@ Resources:
         - Key: Purpose
           Value: BigPicture
       VpcId: !Ref TestVPC  
-  DiosMachine:
+  DiosnMachine:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0ea0cb2b0c1e818ee
