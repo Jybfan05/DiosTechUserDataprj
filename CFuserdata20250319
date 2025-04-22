@@ -49,12 +49,34 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           <powershell>
-            - $s3BucketName = "cawnotepadbucket"
-            - $s3ObjectKey = "googlechromestandaloneenterprise64.msi"
-            - New-Item -Path "C:\Temp\" -ItemType Directory"
-            - $downloadPath = 'C:\Temp\googlechromestandaloneenterprise64.msi'
-            - Invoke-WebRequest -Uri "https://s3.amazonaws.com/$s3BucketName/$s3ObjectKey" -OutFile $downloadPath
-            - Start-Process -FilePath $downloadPath -ArgumentList '/install' -NoNewWindow
+
+            New-Item -Path "C:\Temp\" -ItemType Directory
+            # Install AWS CLI (if not already installed)
+            try {
+            Get-Command -Name aws
+            }
+            catch {
+            Write-Host "AWS CLI not found. Installing..."
+            # Install AWS CLI using PowerShell (adjust package source if needed)
+            Install-Package -Name AWSCLI -Scope CurrentUser -Force
+            Write-Host "AWS CLI installed."
+            }
+
+            # Define S3 bucket and object details
+            $bucketName = "cawnotepadbucket"  # Replace with your bucket name
+            $objectKey = "c:\temp\"  # Replace with the object key
+            $destinationPath = "C:\temp\googlechromestandaloneenterprise64.msi"  # Replace with your desired destination
+
+            # Download the file from S3
+            Write-Host "Downloading file from S3..."
+            try {
+            aws s3 cp "s3://$bucketName/$objectKey" $destinationPath
+            Write-Host "File downloaded successfully!"
+
+            }
+            catch {
+            Write-Host "Error downloading file: $($_.Exception.Message)"
+            }
           </powershell>
       KeyName: caw-dios
       Tags:

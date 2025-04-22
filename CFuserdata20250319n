@@ -46,16 +46,38 @@ Resources:
     Properties:
       ImageId: ami-0ea0cb2b0c1e818ee
       InstanceType: !Ref TestInstanceType
-      UserData:
-        Fn::Base64: !Sub |
-          <powershell>
-            - $s3BucketName = "cawnotepadbucket"
-            - $s3ObjectKey = "googlechromestandaloneenterprise64.msi"
-            - New-Item -Path "C:\Temp\" -ItemType Directory"
-            - $downloadPath = 'C:\Temp\googlechromestandaloneenterprise64.msi'
-            - Invoke-WebRequest -Uri "https://s3.amazonaws.com/$s3BucketName/$s3ObjectKey" -OutFile $downloadPath
-            - Start-Process -FilePath $downloadPath -ArgumentList '/install' -NoNewWindow
-          </powershell>
+UserData:
+  Fn::Base64: !Sub |
+    <powershell>
+
+      #cloud-config
+      write_files:
+        - path: C:\aws_userdata.ps1
+          content: |
+            $bucketName = "cawnotepadbucket"
+            $fileName = "googlechromestandaloneenterprise64.msi"
+            $destinationPath = "C:\Temp\$fileName"
+
+            if (-Not (Test-Path "C:\Program Files\Amazon\AWSCLIV2\aws.exe")) {
+                Start-Process msiexec.exe -ArgumentList "/i https://awscli.amazonaws.com/AWSCLIV2.msi /quiet" -Wait
+            }
+
+            Start-Sleep -Seconds 10
+
+            $destinationDir = Split-Path -Parent $destinationPath
+            if (-Not (Test-Path $destinationDir)) {
+                New-Item -ItemType Directory -Path $destinationDir -Force
+            }
+
+            aws s3 cp "s3://$bucketName/$fileName" "$destinationPath"
+
+            if (Test-Path "$destinationPath") {
+                Write-Output "File downloaded successfully to $destinationPath"
+            } else {
+                Write-Output "File download failed"
+      runcmd:
+        - powershell -ExecutionPolicy Bypass -File C:\aws_userdata.ps1
+    </powershell>
       KeyName: caw-dios
       Tags:
         - Key: Purpose
