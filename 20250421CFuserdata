@@ -9,10 +9,10 @@ Metadata:
         Parameters:
           - KeyPairName    
 Parameters:
-  TestVPCStack:
+  DiosnVPCStack:
     Description: Stack name of parent VPC stack based on vpc/vpc-*azs.yaml template.
     Type: String
-  TestInstanceType:
+  DiosnInstanceType:
     Description: Specifies the type of EC2 to build
     Type: String
     Default: t3.micro
@@ -38,7 +38,7 @@ Parameters:
     Type: String
     Description: 'Please provide the bucket name'
 Resources:
-  TestBucket:
+  DiosnBucket:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: Private
@@ -46,7 +46,7 @@ Resources:
       Tags: 
         - Key: Purpose
           Value: BigPicture
-  TestRole:
+  DiosnRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -79,13 +79,13 @@ Resources:
                   - s3-object-lambda:Get
                   - s3-object-lambda:List
                 Resource: !Sub 'arn:aws:s3:::${TestBucket}'
-  TestInstanceProfile: 
+  DiosnInstanceProfile: 
     Type: "AWS::IAM::InstanceProfile"
     Properties: 
       Path: "/"
       Roles: 
         - Ref: "TestRole"
-  TestBucketPolicy:
+  DiosnBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
        Bucket: !Ref TestBucket
@@ -109,7 +109,7 @@ Resources:
              Resource: !Sub 'arn:aws:s3:::${TestBucket}'
              Principal:
                 AWS: "arn:aws:iam::022781340874:role/TestRole"
-  TestSecurityGroup:
+  DiosnSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: RDP Security Group
@@ -124,7 +124,7 @@ Resources:
         - Key: Purpose
           Value: BigPicture
       VpcId: !Ref TestVPC  
-  TestMachine:
+  DiosMachine:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0ea0cb2b0c1e818ee
@@ -171,31 +171,31 @@ Resources:
           AssociatePublicIpAddress: true
           GroupSet:
             - !Ref TestSecurityGroup
-  TestInternetGateway:
+  DiosnInternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Purpose
           Value: BigPicture
-  TestAttachIG:
+  DiosnAttachIG:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       InternetGatewayId: !Ref TestInternetGateway
       VpcId: !Ref TestVPC
-  TestRouteTable:
+  DiosnRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       Tags:
         - Key: Purpose
           Value: BigPicture
       VpcId: !Ref TestVPC
-  TestRoute:
+  DiosnRoute:
     Type: AWS::EC2::Route
     Properties:
       GatewayId: !Ref TestInternetGateway
       RouteTableId: !Ref TestRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-  TestVPC:
+  DiosnVPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 192.168.0.0/24
@@ -204,7 +204,7 @@ Resources:
       Tags:
         - Key: Purpose
           Value: BigPicture
-  TestSubnetRouteTableAssociation:
+  DiosnSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref Subnet
