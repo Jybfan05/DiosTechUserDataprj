@@ -88,7 +88,7 @@ Resources:
     Properties: 
       Path: "/"
       Roles: 
-        - Ref: "TestRole"
+        - Ref: "DiosnRole"
   DiosnBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -112,7 +112,7 @@ Resources:
              Effect: Allow
              Resource: !Sub 'arn:aws:s3:::${DiosnBucket}'
              Principal:
-                AWS: "arn:aws:iam::022781340874:role/TestRole"
+                AWS: "arn:aws:iam::022781340874:role/DiosnRole"
   DiosnSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -140,7 +140,7 @@ Resources:
         write_files:
         - path: C:\aws_userdata.ps1
           content: |
-            $bucketName = "!Ref TestBucket"
+            $bucketName = "!Ref DiosnBucket"
             $fileName = "googlechromestandaloneenterprise64.msi"
             $destinationPath = "C:\Temp\$fileName"
 
