@@ -1,0 +1,221 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: A template I developed from scratch to better understand cloudformation and yaml, once I am comfortable I will start building my templates with json
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Amazon EC2
+        Parameters:
+          - KeyPairName    
+Parameters:
+  TestVPCStack:
+    Description: Stack name of parent VPC stack based on vpc/vpc-*azs.yaml template.
+    Type: String
+  TestInstanceType:
+    Description: Specifies the type of EC2 to build
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t2.micro
+      - t3.medium
+      - t2.medium 
+  EC2AMIID:
+    Type: String
+    Default: ami-0ea0cb2b0c1e818ee
+    AllowedValues:
+        - ami-0ea0cb2b0c1e818ee
+        - ami-005148a6a3abb558a
+        - ami-0402c79f1f9871f32
+        - ami-0bb38c6a0e66fe2a2      
+  KEYPAIRSID:
+    Type: String
+    Default: caw-dios
+    AllowedValues:
+        - caw-dios
+  BucketName:
+    Type: String
+    Description: 'Please provide the bucket name'
+Resources:
+  TestBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Ref BucketName
+      Tags: 
+        - Key: Purpose
+          Value: BigPicture
+  TestRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Tags: 
+        - Key: Purpose
+          Value: BigPicture
+      Policies:
+        - PolicyName: TestPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ReplicateObject
+                  - s3:PutObject
+                  - s3:RestoreObject
+                  - s3:DeleteObject
+                  - s3:Get
+                  - s3:List
+                  - s3:Describe
+                  - s3-object-lambda:Get
+                  - s3-object-lambda:List
+                Resource: !Sub 'arn:aws:s3:::${TestBucket}'
+  TestInstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Path: "/"
+      Roles: 
+        - Ref: "TestRole"
+  TestBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+       Bucket: !Ref TestBucket
+       PolicyDocument:
+         Id: TestPolicy
+         Version: "2012-10-17"
+         Statement:
+           - Sid: testpolicydoc
+             Action:
+               - 's3:GetObject'
+               - 's3:ReplicateObject'
+               - 's3:PutObject'
+               - 's3:RestoreObject'
+               - 's3:DeleteObject'
+               - 's3:Get'
+               - 's3:List'
+               - 's3:Describe'
+               - 's3-object-lambda:Get'
+               - 's3-object-lambda:List'
+             Effect: Allow
+             Resource: !Sub 'arn:aws:s3:::${TestBucket}'
+             Principal:
+                AWS: "arn:aws:iam::022781340874:role/TestRole"
+  TestSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDP Security Group
+      GroupName: BigPictureRdpSecGroup
+      SecurityGroupIngress:
+        - CidrIp: 71.163.120.33/32
+          Description: Allow all into 3389
+          FromPort: 3389
+          IpProtocol: tcp
+          ToPort: 3389
+      Tags:
+        - Key: Purpose
+          Value: BigPicture
+      VpcId: !Ref TestVPC  
+  TestMachine:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0ea0cb2b0c1e818ee
+      InstanceType: !Ref TestInstanceType
+      UserData:
+       Fn::Base64: !Sub |
+        <powershell>
+        #cloud-config
+        write_files:
+        - path: C:\aws_userdata.ps1
+          content: |
+            $bucketName = "!Ref TestBucket"
+            $fileName = "googlechromestandaloneenterprise64.msi"
+            $destinationPath = "C:\Temp\$fileName"
+
+            if (-Not (Test-Path "C:\Program Files\Amazon\AWSCLIV2\aws.exe")) {
+                Start-Process msiexec.exe -ArgumentList "/i https://awscli.amazonaws.com/AWSCLIV2.msi /quiet" -Wait
+            }
+
+            Start-Sleep -Seconds 10
+
+            $destinationDir = Split-Path -Parent $destinationPath
+            if (-Not (Test-Path $destinationDir)) {
+                New-Item -ItemType Directory -Path $destinationDir -Force
+            }
+
+            aws s3 cp "s3://$bucketName/$fileName" "$destinationPath"
+
+            if (Test-Path "$destinationPath") {
+                Write-Output "File downloaded successfully to $destinationPath"
+            } else {
+                Write-Output "File download failed"
+        runcmd:
+        - powershell -ExecutionPolicy Bypass -File C:\aws_userdata.ps1
+        </powershell>
+      KeyName: caw-dios
+      Tags:
+        - Key: Purpose
+          Value: BigPicture
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          Description: Adapter 1
+          SubnetId: !Ref Subnet
+          AssociatePublicIpAddress: true
+          GroupSet:
+            - !Ref TestSecurityGroup
+  TestInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Purpose
+          Value: BigPicture
+  TestAttachIG:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref TestInternetGateway
+      VpcId: !Ref TestVPC
+  TestRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Purpose
+          Value: BigPicture
+      VpcId: !Ref TestVPC
+  TestRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref TestInternetGateway
+      RouteTableId: !Ref TestRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+  TestVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/24
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Purpose
+          Value: BigPicture
+  TestSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet
+      RouteTableId: !Ref TestRouteTable
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 192.168.0.0/28
+      MapPublicIpOnLaunch: true 
+      Tags:
+        - Key: Purpose
+          Value: BigPicture
+      VpcId: !Ref TestVPC
+Outputs:
