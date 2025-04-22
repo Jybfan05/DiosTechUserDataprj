@@ -49,7 +49,7 @@ Resources:
       BucketName: !Ref BucketName
       Tags: 
         - Key: Purpose
-          Value: !PurposeTag
+          Value: !Ref PurposeTag
   DiosnRole:
     Type: AWS::IAM::Role
     Properties:
