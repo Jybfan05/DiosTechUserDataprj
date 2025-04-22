@@ -222,4 +222,4 @@ Resources:
         - Key: Purpose
           Value: !Ref PurposeTag
       VpcId: !Ref TestVPC
-Outputs:
+Outputs: {}
