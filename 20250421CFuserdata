@@ -9,6 +9,10 @@ Metadata:
         Parameters:
           - KeyPairName    
 Parameters:
+  PurposeTag:
+    Default: !Ref PurposeTag
+    Description: Assign the purpose tag to all the resources.
+    Type: String
   DiosnVPCStack:
     Description: Stack name of parent VPC stack based on vpc/vpc-*azs.yaml template.
     Type: String
@@ -45,7 +49,7 @@ Resources:
       BucketName: !Ref BucketName
       Tags: 
         - Key: Purpose
-          Value: BigPicture
+          Value: !PurposeTag
   DiosnRole:
     Type: AWS::IAM::Role
     Properties:
@@ -60,7 +64,7 @@ Resources:
               - sts:AssumeRole
       Tags: 
         - Key: Purpose
-          Value: BigPicture
+          Value: !Ref PurposeTag
       Policies:
         - PolicyName: TestPolicy
           PolicyDocument:
@@ -113,7 +117,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: RDP Security Group
-      GroupName: BigPictureRdpSecGroup
+      GroupName: !Ref PurposeTagRdpSecGroup
       SecurityGroupIngress:
         - CidrIp: 71.163.120.33/32
           Description: Allow all into 3389
@@ -122,7 +126,7 @@ Resources:
           ToPort: 3389
       Tags:
         - Key: Purpose
-          Value: BigPicture
+          Value: !Ref PurposeTag
       VpcId: !Ref TestVPC  
   DiosnMachine:
     Type: AWS::EC2::Instance
@@ -163,7 +167,7 @@ Resources:
       KeyName: caw-dios
       Tags:
         - Key: Purpose
-          Value: BigPicture
+          Value: !Ref PurposeTag
       NetworkInterfaces:
         - DeviceIndex: '0'
           Description: Adapter 1
@@ -176,7 +180,7 @@ Resources:
     Properties:
       Tags:
         - Key: Purpose
-          Value: BigPicture
+          Value: !Ref PurposeTag
   DiosnAttachIG:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -187,7 +191,7 @@ Resources:
     Properties:
       Tags:
         - Key: Purpose
-          Value: BigPicture
+          Value: !Ref PurposeTag
       VpcId: !Ref TestVPC
   DiosnRoute:
     Type: AWS::EC2::Route
@@ -203,7 +207,7 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: Purpose
-          Value: BigPicture
+          Value: !Ref PurposeTag
   DiosnSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -216,6 +220,6 @@ Resources:
       MapPublicIpOnLaunch: true 
       Tags:
         - Key: Purpose
-          Value: BigPicture
+          Value: !Ref PurposeTag
       VpcId: !Ref TestVPC
 Outputs:
