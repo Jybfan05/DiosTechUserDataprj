@@ -92,7 +92,7 @@ Resources:
   DiosnBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-       Bucket: !Ref TestBucket
+       Bucket: !Ref DiosnBucket
        PolicyDocument:
          Id: TestPolicy
          Version: "2012-10-17"
@@ -110,7 +110,7 @@ Resources:
                - 's3-object-lambda:Get'
                - 's3-object-lambda:List'
              Effect: Allow
-             Resource: !Sub 'arn:aws:s3:::${TestBucket}'
+             Resource: !Sub 'arn:aws:s3:::${DiosnBucket}'
              Principal:
                 AWS: "arn:aws:iam::022781340874:role/TestRole"
   DiosnSecurityGroup:
@@ -127,12 +127,12 @@ Resources:
       Tags:
         - Key: Purpose
           Value: !Ref PurposeTag
-      VpcId: !Ref TestVPC  
+      VpcId: !Ref DiosnVPC  
   DiosnMachine:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0ea0cb2b0c1e818ee
-      InstanceType: !Ref TestInstanceType
+      InstanceType: !Ref DiosnInstanceType
       UserData:
        Fn::Base64: !Sub |
         <powershell>
@@ -174,7 +174,7 @@ Resources:
           SubnetId: !Ref Subnet
           AssociatePublicIpAddress: true
           GroupSet:
-            - !Ref TestSecurityGroup
+            - !Ref DiosnSecurityGroup
   DiosnInternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -184,20 +184,20 @@ Resources:
   DiosnAttachIG:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      InternetGatewayId: !Ref TestInternetGateway
-      VpcId: !Ref TestVPC
+      InternetGatewayId: !Ref DiosnInternetGateway
+      VpcId: !Ref DiosnVPC
   DiosnRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       Tags:
         - Key: Purpose
           Value: !Ref PurposeTag
-      VpcId: !Ref TestVPC
+      VpcId: !Ref DiosnVPC
   DiosnRoute:
     Type: AWS::EC2::Route
     Properties:
-      GatewayId: !Ref TestInternetGateway
-      RouteTableId: !Ref TestRouteTable
+      GatewayId: !Ref DiosnInternetGateway
+      RouteTableId: !Ref DiosnRouteTable
       DestinationCidrBlock: 0.0.0.0/0
   DiosnVPC:
     Type: AWS::EC2::VPC
@@ -212,7 +212,7 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref Subnet
-      RouteTableId: !Ref TestRouteTable
+      RouteTableId: !Ref DiosnRouteTable
   Subnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -221,5 +221,5 @@ Resources:
       Tags:
         - Key: Purpose
           Value: !Ref PurposeTag
-      VpcId: !Ref TestVPC
+      VpcId: !Ref DiosnVPC
 Outputs: {}
