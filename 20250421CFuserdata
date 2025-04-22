@@ -10,7 +10,7 @@ Metadata:
           - KeyPairName    
 Parameters:
   PurposeTag:
-    Default: !Ref PurposeTag
+    Default: BigPicture
     Description: Assign the purpose tag to all the resources.
     Type: String
   DiosnVPCStack:
