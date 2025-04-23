@@ -1,5 +1,4 @@
----
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: '2010-09-09'
 Description: A template I developed from scratch to better understand cloudformation and yaml, once I am comfortable I will start building my templates with json
 Metadata:
   AWS::CloudFormation::Interface:
